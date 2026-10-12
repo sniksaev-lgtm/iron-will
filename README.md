@@ -14,6 +14,7 @@ Iron Will is a personal, offline-capable strategy/motivation PWA. The deployed v
 - Enemy occupied-cell limits: adaptive 4/5/7 depending on previous-day activity and territory balance, standard 8, hard 10 including raids. Planned raids reserve part of the limit so they are not starved by expansion.
 - Ending the player phase clears unused points and locks further actions until the next local calendar day. Calendar changes are checked on focus/visibility and while the app remains open.
 - The map persists across weeks: territory is not reset after a weekly result. Each week records a win/loss/draw, territory counts, and action count; the front only changes when the user explicitly starts a new one. Missed weeks are recorded on return without resetting the map.
+- The refreshed UI performs a one-time local reset on first load, clearing the previous map, weekly results, and action journal so the updated game starts cleanly.
 - Repeated identical custom actions are capped per day; common presets have their own limits.
 - Weekly action statistics are separated from the lifetime action journal. Weekly results keep territory counts and the map seed; the active front itself is saved continuously.
 - IndexedDB persistence, localStorage fallback, JSON export/import with size/schema/real-date validation, offline cache, sound toggle, reduced-motion setting, and visible runtime errors.
