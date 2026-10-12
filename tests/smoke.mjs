@@ -291,5 +291,24 @@ check(api.state.history.length === 1, "missed campaign result retained in histor
 check(env.elements.modaltitle.textContent === "Сводка за время отсутствия", "missed-week report shown");
 checks.push("Missed-week summary and rollover");
 
+// Named presets should keep their configured reward, even if the reward dropdown is edited.
+const presetCampaign = api.makeCampaign(12, 30, today, 303030);
+api.setState(presetCampaign);
+env.elements.taskname.value = "Разобрать рабочий стол";
+env.elements.category.value = "Порядок";
+env.elements.reward.value = "4";
+env.elements.actionform.onsubmit({ preventDefault() {} });
+check(api.state.actions.length === 1 && api.state.actions[0].reward === 1, "preset reward remains configured value");
+checks.push("Preset reward consistency");
+
+// The current-week chart must not include previous campaigns' actions on the same date.
+const chartCampaign = api.makeCampaign(12, 31, today, 313131);
+chartCampaign.actions = [{ name: "Prior campaign", date: today, category: "Учёба", reward: 2 }];
+chartCampaign.campaignActionStart = 1;
+chartCampaign.dayActions[today] = 1;
+api.setState(chartCampaign);
+check(env.elements.chart.children[0].children[1].textContent === "0", "daily chart excludes prior campaigns");
+checks.push("Campaign-scoped daily chart");
+
 console.log("Iron Will smoke checks passed: " + checks.length);
 for (const item of checks) console.log("PASS: " + item);
