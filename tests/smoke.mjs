@@ -10,7 +10,7 @@ script = script.replace("init().catch(function(e){", "window.__iwBoot=init().cat
 const ending = "})();";
 assert.ok(script.endsWith(ending), "script wrapper ending");
 script = script.slice(0, -ending.length) +
-  "window.__iwTestApi={get state(){return state},setState:function(v){state=v;render()},makeCampaign:makeCampaign,setForecast:setForecast,enemyTurn:enemyTurn,catchUp:catchUp,registerAction:registerAction,capture:capture,recordHistory:recordHistory,newCampaign:newCampaign,cellCost:cellCost,eligible:eligible,neighbors:neighbors,persist:persist,render:render};})();";
+  "window.__iwTestApi={get state(){return state},setState:function(v){state=v;render()},makeCampaign:makeCampaign,setForecast:setForecast,enemyTurn:enemyTurn,catchUp:catchUp,registerAction:registerAction,capture:capture,recordHistory:recordHistory,newCampaign:newCampaign,cellCost:cellCost,eligible:eligible,neighbors:neighbors,persist:persist,render:render,validDateKey:validDateKey,syncCalendar:syncCalendar};})();";
 
 class FakeElement {
   constructor(tag = "div") {
@@ -259,6 +259,37 @@ await reloaded.window.__iwBoot;
 check(reloaded.window.__iwTestApi.state.actions.length === 1, "saved action journal survives reload");
 check([144, 256, 400].includes(reloaded.window.__iwTestApi.state.cells.length), "saved map survives reload");
 checks.push("Local save / reload");
+
+// Backups must use real calendar dates, not merely date-shaped strings.
+check(api.validDateKey("2026-10-12"), "valid calendar date accepted");
+check(!api.validDateKey("2026-99-99") && !api.validDateKey("not-a-date"), "invalid calendar dates rejected");
+checks.push("Calendar date validation");
+
+// Returning after a missed date must resolve the enemy turn while the app stays open.
+const yesterday = new Date();
+yesterday.setDate(yesterday.getDate() - 1);
+const missedDay = api.makeCampaign(12, 20, key(yesterday), 202020);
+missedDay.lastDay = key(yesterday);
+missedDay.day = 2;
+missedDay.points = 3;
+api.setState(missedDay);
+await api.syncCalendar();
+check(api.state.lastDay === today, "focus sync advances to current local date");
+check(api.state.day === 3 && api.state.points === 0, "missed enemy turn runs once and clears old points");
+checks.push("Live calendar sync");
+
+// If an entire campaign ended while away, retain the result and display a report.
+const missedWeek = api.makeCampaign(12, 21, key(yesterday), 212121);
+missedWeek.lastDay = key(yesterday);
+missedWeek.day = 7;
+missedWeek.history = [];
+missedWeek.actions = [];
+api.setState(missedWeek);
+api.catchUp();
+check(api.state.number === 22, "one new campaign starts after missed week");
+check(api.state.history.length === 1, "missed campaign result retained in history");
+check(env.elements.modaltitle.textContent === "Сводка за время отсутствия", "missed-week report shown");
+checks.push("Missed-week summary and rollover");
 
 console.log("Iron Will smoke checks passed: " + checks.length);
 for (const item of checks) console.log("PASS: " + item);
