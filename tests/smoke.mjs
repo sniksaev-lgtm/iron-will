@@ -112,12 +112,12 @@ await env.window.__iwBoot;
 const api = env.window.__iwTestApi;
 const today = key(new Date());
 
-check([144, 256, 400].includes(api.state.cells.length), "first launch chooses a supported random map size");
+check([1024, 1296, 1600].includes(api.state.cells.length), "first launch chooses a supported random map size");
 check(env.elements.map.children.length === api.state.cells.length, "all generated cells render");
 check(env.tabs.every(tab => typeof tab.onclick === "function"), "all four tabs have handlers");
 checks.push("First launch and navigation");
 
-for (const size of [12, 16, 20]) {
+for (const size of [32, 36, 40]) {
   const first = api.makeCampaign(size, 1, "2026-10-12", 123456);
   const second = api.makeCampaign(size, 1, "2026-10-12", 123456);
   check(first.cells.length === size * size, "correct cell count for size " + size);
@@ -127,13 +127,13 @@ for (const size of [12, 16, 20]) {
   check(connectedCells(api, first, "player"), "player starting territory is connected");
   check(connectedCells(api, first, "enemy"), "enemy starting territory is connected");
   check(first.cells.some(cell => cell.owner === "neutral"), "neutral front exists");
-  check(first.mapShape === "island-v1", "new campaign is marked as island map");
-  check(first.cells.some(cell => cell.owner === "water"), "island has surrounding sea");
+  check(first.mapShape === "country-v2", "new campaign is marked as country map");
+  check(first.cells.some(cell => cell.owner === "water"), "country map includes water cells");
   check(first.cells.every(cell => (cell.owner === "water") === (cell.terrain === "water")), "water cells cannot be mistaken for land");
 }
-checks.push("Map sizes, seeded reproducibility, island sea mask, special sites and start connectivity");
+checks.push("Large country maps, seeded reproducibility, water mask, special sites and start connectivity");
 
-api.setState(api.makeCampaign(12, 2, today, 222));
+api.setState(api.makeCampaign(36, 2, today, 222));
 api.setForecast();
 check(api.registerAction("Test study", "Учёба", 2, null) === true, "first custom action allowed");
 check(api.registerAction("Test study", "Учёба", 2, null) === true, "second custom action allowed");
@@ -142,7 +142,7 @@ check(api.registerAction("Test study", "Учёба", 2, null) === false, "fourth
 check(api.state.points === 6, "only accepted actions grant points");
 checks.push("Action rewards and anti-farming cap");
 
-const legal = api.makeCampaign(12, 3, today, 333);
+const legal = api.makeCampaign(36, 3, today, 333);
 api.setState(legal);
 api.setForecast();
 const target = legal.cells.find(cell => cell.owner === "neutral" && cell.terrain === "plain" && !cell.fort && api.neighbors(cell.id).some(index => legal.cells[index].owner === "player"));
@@ -163,7 +163,7 @@ api.capture(sea.id);
 check(sea.owner === "water" && legal.points === beforeSeaPoints, "sea cannot be captured or consume points");
 checks.push("Capture legality, cost and duplicate-use protection");
 
-const diagonal = api.makeCampaign(12, 4, today, 444);
+const diagonal = api.makeCampaign(36, 4, today, 444);
 diagonal.cells.forEach(cell => { cell.owner = "neutral"; cell.fort = 0; cell.special = null; });
 diagonal.cells[0].owner = "player";
 diagonal.cells[diagonal.size * diagonal.size - 1].owner = "enemy";
@@ -174,7 +174,7 @@ check(diagonal.cells[diagonal.size + 1].owner === "neutral", "diagonal-only targ
 check(diagonal.points === 4, "invalid capture spends no points");
 checks.push("Diagonal capture blocked");
 
-const supply = api.makeCampaign(12, 5, today, 555);
+const supply = api.makeCampaign(36, 5, today, 555);
 api.setState(supply);
 api.setForecast();
 const depot = supply.cells.find(cell => cell.special === "supply");
@@ -190,7 +190,7 @@ api.capture(depot.id);
 check(supply.points === 10 - depotCost, "supply bonus cannot be farmed by recapture");
 checks.push("One-time supply bonus");
 
-const standard = api.makeCampaign(12, 6, today, 666);
+const standard = api.makeCampaign(36, 6, today, 666);
 standard.difficulty = "standard";
 api.setState(standard);
 api.setForecast();
@@ -204,7 +204,7 @@ check(playerLost === 0, "enemy doesn't raid distant non-front player cells");
 check(standard.day === 2 && standard.points === 0, "enemy turn advances calendar and clears points");
 checks.push("Enemy phases and standard daily cap");
 
-const hard = api.makeCampaign(12, 7, today, 777);
+const hard = api.makeCampaign(36, 7, today, 777);
 hard.cells.forEach(cell => { cell.owner = "neutral"; cell.fort = 0; cell.special = null; cell.terrain = "plain"; });
 hard.cells[0].owner = "player";
 hard.cells[1].owner = "enemy";
@@ -221,7 +221,7 @@ check(hardPlayerLoss <= 2, "hard raid has at most two player-cell losses");
 check(hard.points === 0, "enemy turn consumes leftover daily points");
 checks.push("Hard-mode total cap and raid cap");
 
-const locked = api.makeCampaign(12, 10, today, 1010);
+const locked = api.makeCampaign(36, 10, today, 1010);
 api.setState(locked);
 api.setForecast();
 const blockedTarget = locked.cells.find(cell => cell.owner === "neutral" && cell.terrain === "plain" && !cell.fort && api.neighbors(cell.id).some(index => locked.cells[index].owner === "player"));
@@ -239,18 +239,23 @@ api.enemyTurn(key(new Date(Date.now() + 86400000)));
 check(locked.phaseEnded === false, "enemy turn reopens next day's player phase");
 checks.push("End-day lock and next-day unlock");
 
-const history = api.makeCampaign(12, 8, today, 888);
+const history = api.makeCampaign(36, 8, today, 888);
 history.actions = [{ name: "Current test", date: today, category: "Учёба", reward: 2 }];
 history.campaignActionStart = 0;
 api.setState(history);
 api.recordHistory(false);
 check(history.history[0].actions === 1, "history stores campaign-specific action count");
-const historicOwner = history.history[0].snapshot[0].owner;
-history.cells[0].owner = historicOwner === "player" ? "enemy" : "player";
-check(history.history[0].snapshot[0].owner === historicOwner, "historical board snapshot is immutable");
-checks.push("Campaign history snapshot integrity");
+check(history.history[0].week === 1 && history.history[0].actions === 1, "history stores the weekly result and weekly action count");
+const beforeWeeklyFinish = history.cells.map(cell => cell.owner).join(",");
+history.day = 7;
+api.setState(history);
+env.elements.finishday.click();
+env.elements.modalok.click();
+check(api.state.number === 8 && api.state.weekNumber === 2, "weekly rollover keeps the same front and increments week number");
+check(api.state.cells.map(cell => cell.owner).join(",") === beforeWeeklyFinish, "weekly rollover preserves the map and all territory");
+checks.push("Weekly result and persistent-map integrity");
 
-const rollover = api.makeCampaign(12, 9, today, 999);
+const rollover = api.makeCampaign(36, 9, today, 999);
 rollover.actions = [{ name: "Older record", date: today, category: "Спорт", reward: 1 }];
 rollover.history = [];
 api.setState(rollover);
@@ -265,7 +270,7 @@ await api.persist();
 const reloaded = makeEnvironment(storage);
 await reloaded.window.__iwBoot;
 check(reloaded.window.__iwTestApi.state.actions.length === 1, "saved action journal survives reload");
-check([144, 256, 400].includes(reloaded.window.__iwTestApi.state.cells.length), "saved map survives reload");
+check([1024, 1296, 1600].includes(reloaded.window.__iwTestApi.state.cells.length), "saved map survives reload");
 checks.push("Local save / reload");
 
 // Backups must use real calendar dates, not merely date-shaped strings.
@@ -276,7 +281,7 @@ checks.push("Calendar date validation");
 // Returning after a missed date must resolve the enemy turn while the app stays open.
 const yesterday = new Date();
 yesterday.setDate(yesterday.getDate() - 1);
-const missedDay = api.makeCampaign(12, 20, key(yesterday), 202020);
+const missedDay = api.makeCampaign(36, 20, key(yesterday), 202020);
 missedDay.lastDay = key(yesterday);
 missedDay.day = 2;
 missedDay.points = 3;
@@ -287,20 +292,20 @@ check(api.state.day === 3 && api.state.points === 0, "missed enemy turn runs onc
 checks.push("Live calendar sync");
 
 // If an entire campaign ended while away, retain the result and display a report.
-const missedWeek = api.makeCampaign(12, 21, key(yesterday), 212121);
+const missedWeek = api.makeCampaign(36, 21, key(yesterday), 212121);
 missedWeek.lastDay = key(yesterday);
 missedWeek.day = 7;
 missedWeek.history = [];
 missedWeek.actions = [];
 api.setState(missedWeek);
 api.catchUp();
-check(api.state.number === 22, "one new campaign starts after missed week");
-check(api.state.history.length === 1, "missed campaign result retained in history");
+check(api.state.number === 21 && api.state.weekNumber === 2, "missed week continues the same front");
+check(api.state.history.length === 1, "missed weekly result retained in history");
 check(env.elements.modaltitle.textContent === "Сводка за время отсутствия", "missed-week report shown");
 checks.push("Missed-week summary and rollover");
 
 // Named presets should keep their configured reward, even if the reward dropdown is edited.
-const presetCampaign = api.makeCampaign(12, 30, today, 303030);
+const presetCampaign = api.makeCampaign(36, 30, today, 303030);
 api.setState(presetCampaign);
 env.elements.taskname.value = "Разобрать рабочий стол";
 env.elements.category.value = "Порядок";
@@ -310,13 +315,14 @@ check(api.state.actions.length === 1 && api.state.actions[0].reward === 1, "pres
 checks.push("Preset reward consistency");
 
 // The current-week chart must not include previous campaigns' actions on the same date.
-const chartCampaign = api.makeCampaign(12, 31, today, 313131);
+const chartCampaign = api.makeCampaign(36, 31, today, 313131);
 chartCampaign.actions = [{ name: "Prior campaign", date: today, category: "Учёба", reward: 2 }];
 chartCampaign.campaignActionStart = 1;
+chartCampaign.weekActionStart = 1;
 chartCampaign.dayActions[today] = 1;
 api.setState(chartCampaign);
 check(env.elements.chart.children[0].children[1].textContent === "0", "daily chart excludes prior campaigns");
-checks.push("Campaign-scoped daily chart");
+checks.push("Week-scoped daily chart");
 
 console.log("Iron Will smoke checks passed: " + checks.length);
 for (const item of checks) console.log("PASS: " + item);
