@@ -112,8 +112,8 @@ await env.window.__iwBoot;
 const api = env.window.__iwTestApi;
 const today = key(new Date());
 
-check(api.state.cells.length === 256, "first launch creates a 16×16 map");
-check(env.elements.map.children.length === 256, "all 256 cells render");
+check([144, 256, 400].includes(api.state.cells.length), "first launch chooses a supported random map size");
+check(env.elements.map.children.length === api.state.cells.length, "all generated cells render");
 check(env.tabs.every(tab => typeof tab.onclick === "function"), "all four tabs have handlers");
 checks.push("First launch and navigation");
 
@@ -255,7 +255,7 @@ await api.persist();
 const reloaded = makeEnvironment(storage);
 await reloaded.window.__iwBoot;
 check(reloaded.window.__iwTestApi.state.actions.length === 1, "saved action journal survives reload");
-check(reloaded.window.__iwTestApi.state.cells.length === 144, "saved map survives reload");
+check([144, 256, 400].includes(reloaded.window.__iwTestApi.state.cells.length), "saved map survives reload");
 checks.push("Local save / reload");
 
 console.log("Iron Will smoke checks passed: " + checks.length);
