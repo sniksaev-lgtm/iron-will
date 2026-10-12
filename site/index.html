@@ -95,7 +95,7 @@ function enemyTurn(date){
 state.phaseEnded=false;
 var hard=state.difficulty==='hard',standard=state.difficulty==='standard';
 var limit;if(hard)limit=10;else if(standard)limit=8;else{var previousActions=state.dayActions[shiftDate(date,-1)]||0,playerTerritory=state.cells.filter(function(c){return c.owner==='player'}).length,enemyTerritory=state.cells.filter(function(c){return c.owner==='enemy'}).length;limit=previousActions>=3&&playerTerritory>enemyTerritory?7:previousActions===0?4:5;}
-var taken=0,expanded=0,raided=0,raidChance=hard?1:standard?.5:.28,raidLimit=hard?2:1,raidPlanned=random()<raidChance;
+var taken=0,expanded=0,raided=0,raidChance=hard?1:standard?.5:.28,raidLimit=hard?2:1,raidPlanned=!!(state.forecast&&state.forecast.kind==='raid')&&random()<raidChance;
 function neutralTargets(){return state.cells.filter(function(c){return c.owner==='neutral'&&neighbors(c.id).some(function(n){return state.cells[n].owner==='enemy'})})}
 function claimNeutral(){
 var targets=neutralTargets();if(!targets.length)return false;
