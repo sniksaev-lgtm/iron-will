@@ -1,0 +1,19 @@
+{
+  "name": "Iron Will — личная стратегия",
+  "short_name": "Iron Will",
+  "description": "Полезные действия превращаются в тактические решения.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101411",
+  "theme_color": "#121714",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
