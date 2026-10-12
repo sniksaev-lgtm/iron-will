@@ -3,14 +3,14 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const html = fs.readFileSync(new URL("../site/index.html", import.meta.url), "utf8");
-let script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+let script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1]?.trimEnd();
 assert.ok(script, "inline gameplay script must exist");
 new Function(script);
 script = script.replace("init().catch(function(e){", "window.__iwBoot=init().catch(function(e){");
 const ending = "})();";
 assert.ok(script.endsWith(ending), "script wrapper ending");
 script = script.slice(0, -ending.length) +
-  "window.__iwTestApi={get state(){return state},setState:function(v){state=v},makeCampaign:makeCampaign,setForecast:setForecast,enemyTurn:enemyTurn,catchUp:catchUp,registerAction:registerAction,capture:capture,recordHistory:recordHistory,newCampaign:newCampaign,cellCost:cellCost,eligible:eligible,neighbors:neighbors,persist:persist};})();";
+  "window.__iwTestApi={get state(){return state},setState:function(v){state=v;render()},makeCampaign:makeCampaign,setForecast:setForecast,enemyTurn:enemyTurn,catchUp:catchUp,registerAction:registerAction,capture:capture,recordHistory:recordHistory,newCampaign:newCampaign,cellCost:cellCost,eligible:eligible,neighbors:neighbors,persist:persist,render:render};})();";
 
 class FakeElement {
   constructor(tag = "div") {
@@ -212,6 +212,22 @@ check(hardEnemiesGained <= 10, "hard enemy never exceeds 10 cells per turn");
 check(hardPlayerLoss <= 2, "hard raid has at most two player-cell losses");
 check(hard.points === 0, "enemy turn consumes leftover daily points");
 checks.push("Hard-mode total cap and raid cap");
+
+const locked = api.makeCampaign(12, 10, today, 1010);
+api.setState(locked);
+api.setForecast();
+const blockedTarget = locked.cells.find(cell => cell.owner === "neutral" && cell.terrain === "plain" && !cell.fort && api.neighbors(cell.id).some(index => locked.cells[index].owner === "player"));
+check(!!blockedTarget, "test map must have a legal target before closing the phase");
+locked.points = 3;
+env.elements.finishday.click();
+env.elements.modalok.click();
+check(locked.phaseEnded === true, "finish-day confirmation closes the player phase");
+check(api.registerAction("Locked phase test", "Учёба", 1, null) === false, "actions are rejected after phase close");
+api.capture(blockedTarget.id);
+check(blockedTarget.owner === "neutral" && locked.points === 3, "capture cannot happen after phase close");
+api.enemyTurn(key(new Date(Date.now() + 86400000)));
+check(locked.phaseEnded === false, "enemy turn reopens next day's player phase");
+checks.push("End-day lock and next-day unlock");
 
 const history = api.makeCampaign(12, 8, today, 888);
 history.actions = [{ name: "Current test", date: today, category: "Учёба", reward: 2 }];
