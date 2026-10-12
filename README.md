@@ -6,14 +6,14 @@ Iron Will is a personal, offline-capable strategy/motivation PWA. The deployed v
 
 ## Current features
 
-- Random weekly maps of 12×12, 16×16, or 20×20, with saved seeds and deterministic map generation.
+- Large deterministic country-shaped maps of 32×32, 36×36, or 40×40 cells, with irregular coastlines, bays, peninsulas, and water cells. Existing island saves are migrated to a larger country map while resampling current ownership.
 - Orthogonal-only captures; movement is checked in the game logic, not only the UI.
 - Terrain and fortifications affect capture costs.
 - Two strategic objectives: a supply depot grants a one-time +2 command-point bonus, and a reconnaissance tower reveals the forecast target.
 - Forecasted enemy pressure plus distinct advance, fortification, and raid phases.
 - Enemy occupied-cell limits: adaptive 4/5/7 depending on previous-day activity and territory balance, standard 8, hard 10 including raids. Planned raids reserve part of the limit so they are not starved by expansion.
 - Ending the player phase clears unused points and locks further actions until the next local calendar day. Calendar changes are checked on focus/visibility and while the app remains open.
-- If one or more weekly campaigns end while the app is away, results are saved and a recap is shown when the user returns.
+- The map persists across weeks: territory is not reset after a weekly result. Each week records a win/loss/draw, territory counts, and action count; the front only changes when the user explicitly starts a new one. Missed weeks are recorded on return without resetting the map.
 - Repeated identical custom actions are capped per day; common presets have their own limits.
 - Current-campaign statistics are separated from lifetime actions; finished campaigns keep a map snapshot and seed.
 - IndexedDB persistence, localStorage fallback, JSON export/import with size/schema/real-date validation, offline cache, sound toggle, reduced-motion setting, and visible runtime errors.
