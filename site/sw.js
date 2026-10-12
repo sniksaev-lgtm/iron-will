@@ -1,4 +1,4 @@
-const CACHE = 'iron-will-static-v3';
+const CACHE = 'iron-will-static-v4';
 const ROOT = new URL('./', self.location.href).href;
 const ASSETS = [
   ROOT,
