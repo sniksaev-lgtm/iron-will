@@ -56,7 +56,7 @@ var owner=x<Math.max(2,Math.floor(s*.19))?'player':x>=Math.min(s-2,Math.ceil(s*.
 var r=Math.random(),terrain=r<.58?'plain':r<.77?'forest':r<.9?'hill':r<.97?'ruins':'fortress';
 cells.push({id:y*s+x,x:x,y:y,owner:owner,terrain:terrain,fort:terrain==='fortress'?1:((owner!=='neutral'&&Math.random()<.04)?1:0)});
 }
-var sample={size:s,cells:cells,number:num,startDate:startDate,day:1,lastDay:startDate,points:0,actions:[],events:[{date:startDate,text:'Кампания №'+num началась. Войска заняли стартовые позиции.',enemy:false}],captured:0,lost:0,activeDays:[],dayActions:{},history:[],difficulty:'adaptive',sound:false,reduced:false,wins:0,completed:0};
+var sample={size:s,cells:cells,number:num,startDate:startDate,day:1,lastDay:startDate,points:0,actions:[],events:[{date:startDate,text:'Кампания №'+num+' началась. Войска заняли стартовые позиции.',enemy:false}],captured:0,lost:0,activeDays:[],dayActions:{},history:[],difficulty:'adaptive',sound:false,reduced:false,wins:0,completed:0};
 return sample;
 }
 function openDB(){return new Promise(function(resolve){if(!('indexedDB'in window)){resolve(null);return}var req=indexedDB.open(DB,1);req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains(STORE))req.result.createObjectStore(STORE)};req.onsuccess=function(){resolve(req.result)};req.onerror=function(){resolve(null)}})}
