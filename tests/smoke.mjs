@@ -127,8 +127,11 @@ for (const size of [12, 16, 20]) {
   check(connectedCells(api, first, "player"), "player starting territory is connected");
   check(connectedCells(api, first, "enemy"), "enemy starting territory is connected");
   check(first.cells.some(cell => cell.owner === "neutral"), "neutral front exists");
+  check(first.mapShape === "island-v1", "new campaign is marked as island map");
+  check(first.cells.some(cell => cell.owner === "water"), "island has surrounding sea");
+  check(first.cells.every(cell => (cell.owner === "water") === (cell.terrain === "water")), "water cells cannot be mistaken for land");
 }
-checks.push("Map sizes, seeded reproducibility, special sites and start connectivity");
+checks.push("Map sizes, seeded reproducibility, island sea mask, special sites and start connectivity");
 
 api.setState(api.makeCampaign(12, 2, today, 222));
 api.setForecast();
@@ -153,6 +156,11 @@ check(legal.points === 3 - captureCost, "capture charges exactly its cost");
 check(legal.cells.filter(cell => cell.owner === "player").length === initialPlayerCells + 1, "capture adds one cell");
 api.capture(target.id);
 check(legal.points === 3 - captureCost, "captured cell cannot be charged again");
+const sea = legal.cells.find(cell => cell.owner === "water");
+check(!!sea && api.eligible(sea) === false, "sea cells are never legal capture targets");
+const beforeSeaPoints = legal.points;
+api.capture(sea.id);
+check(sea.owner === "water" && legal.points === beforeSeaPoints, "sea cannot be captured or consume points");
 checks.push("Capture legality, cost and duplicate-use protection");
 
 const diagonal = api.makeCampaign(12, 4, today, 444);
