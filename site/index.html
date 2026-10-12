@@ -114,7 +114,7 @@ function drawMap(){
 var map=document.getElementById('map');map.innerHTML='';map.style.gridTemplateColumns='repeat('+state.size+',minmax(0,1fr))';
 var legal=state.cells.filter(function(c){return eligible(c)});
 state.cells.forEach(function(c){
-var b=document.createElement('button');b.className='cell '+c.owner+(c.terrain==='forest'?' forest':c.terrain==='hill'?' hill':'')+(c.fort?' fort':'')+(state.points>0&&eligible(c)?' target':'')+(selectedId===c.id?' selected':'');b.style.gridColumn=(c.x+1);b.style.gridRow=(c.y+1);
+var b=document.createElement('button');b.className='cell '+c.owner+(c.terrain==='forest'?' forest':c.terrain==='hill'?' hill':'')+(c.fort?' fort':'')+(state.points>=cellCost(c)&&eligible(c)?' target':'')+(selectedId===c.id?' selected':'');b.style.gridColumn=(c.x+1);b.style.gridRow=(c.y+1);
 var sym=c.owner==='player'?'◆':c.owner==='enemy'?'✦':'·';if(c.fort)sym='♜';else if(c.terrain==='forest'&&c.owner==='neutral')sym='♣';else if(c.terrain==='hill'&&c.owner==='neutral')sym='▲';
 b.textContent=sym;b.title=(c.x+1)+','+(c.y+1)+' · '+ownerName(c.owner)+' · '+terrainName(c.terrain)+(c.fort?' · укрепление +'+c.fort:'');b.setAttribute('aria-label',b.title);b.setAttribute('role','gridcell');b.onclick=function(){selectedId=c.id;if(eligible(c)&&state.points>0)capture(c.id);else{render();document.getElementById('selected').textContent='['+(c.x+1)+','+(c.y+1)+']';document.getElementById('cost').textContent=cellCost(c)+' очк.'}};map.appendChild(b);
 });
